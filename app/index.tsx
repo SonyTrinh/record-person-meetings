@@ -65,17 +65,14 @@ export const HomeScreen = () => {
 
   const renderMeeting = ({ item, index }: { item: Meeting; index: number }) => {
     const statusPalette = getMeetingStatusPalette(item.status);
-    const meetingNumber = index + 1;
 
     return (
       <Pressable
         style={styles.meetingCard}
-        onPress={() => router.push(`/meetings/${item.id}?meetingNo=${meetingNumber}`)}
+        onPress={() => router.push(`/meetings/${item.id}`)}
       >
         <View>
-          <Text style={styles.meetingTitle}>
-            {item.title ? `${item.title} #${meetingNumber}` : `Meeting ${meetingNumber}`}
-          </Text>
+          <Text style={styles.meetingTitle}>{item.title || `Meeting`}</Text>
           <Text style={styles.meetingDate}>
             {new Date(item.created_at).toLocaleDateString()} |{" "}
             {new Date(item.created_at).toLocaleTimeString()}
@@ -170,8 +167,6 @@ export const HomeScreen = () => {
               refreshing={refreshing}
               onRefresh={handleRefreshMeetings}
               tintColor="#f0444a"
-              progressViewOffset={0}
-              progressBackgroundColor="#090b10"
             />
           }
           contentContainerStyle={styles.listContent}

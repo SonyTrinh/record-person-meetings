@@ -232,6 +232,8 @@ export const useMeetingRecorder = ({
         throw new Error(updateError.message);
       }
 
+      await onRefreshMeetings?.();
+
       const backendUrl = getResolvedBackendUrl();
       if (backendUrl) {
         try {
