@@ -1,6 +1,8 @@
 # Record In-Person Meetings
 
 Expo app + FastAPI backend for recording in-person meetings, uploading audio to Supabase Storage, and generating transcript/summary.
+## DEMO VIDEO
+[Watch Video](https://drive.google.com/file/d/1bnckIUtu-m04GoQNlYCtHx-hI0aKd0qO/view)
 
 ## Features
 
