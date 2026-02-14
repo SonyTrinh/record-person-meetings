@@ -3,14 +3,7 @@ import { Alert } from "react-native";
 
 import { ensureSignedInUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Meeting } from "@/types/meeting";
-
-type FetchMode = "loading" | "refreshing" | "silent";
-
-type FetchMeetingsOptions = {
-  showLoader?: boolean;
-  mode?: FetchMode;
-};
+import { FetchMeetingsOptions, FetchMode, Meeting } from "@/types/meeting";
 
 export const useMeetings = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -19,7 +12,8 @@ export const useMeetings = () => {
 
   const fetchMeetings = useCallback(
     async ({ showLoader = true, mode }: FetchMeetingsOptions = {}) => {
-      const fetchMode: FetchMode = mode ?? (showLoader ? "loading" : "refreshing");
+      const fetchMode: FetchMode =
+        mode ?? (showLoader ? "loading" : "refreshing");
 
       if (fetchMode === "loading") {
         setLoading(true);

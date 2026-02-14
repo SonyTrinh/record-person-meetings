@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.hieutrinh.recordinpersonmeetings",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "We use your microphone to record in-person meetings."
+        "NSMicrophoneUsageDescription": "We use your microphone to record in-person meetings.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,8 +26,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
@@ -63,7 +62,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c0ccfb42-2464-432e-b7ef-37195a541432"
+        "projectId": "d97fa783-0c5d-400b-a99f-d0051a2a6398"
       }
     },
     "owner": "sonytrinh"

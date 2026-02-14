@@ -20,3 +20,10 @@ export type Meeting = {
   created_at: string;
   updated_at: string;
 };
+
+export type FetchMode = "loading" | "refreshing" | "silent";
+
+export type FetchMeetingsOptions = {
+  showLoader?: boolean;
+  mode?: FetchMode;
+};
