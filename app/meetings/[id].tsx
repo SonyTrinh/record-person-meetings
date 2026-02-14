@@ -10,7 +10,7 @@ import {
 
 import { supabase } from "@/lib/supabase";
 import { Meeting } from "@/types/meeting";
-import { getMeetingStatusPalette } from "@/utils/home";
+import { getMeetingDurationText, getMeetingStatusPalette } from "@/utils/home";
 
 const MeetingDetailScreen = () => {
   const { id, meetingNo } = useLocalSearchParams<{
@@ -65,6 +65,7 @@ const MeetingDetailScreen = () => {
       ? `${meeting.title} #${parsedMeetingNo}`
       : `Meeting ${parsedMeetingNo}`
     : meeting.title || "Meeting";
+  const durationText = getMeetingDurationText(meeting.started_at, meeting.ended_at);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -73,6 +74,7 @@ const MeetingDetailScreen = () => {
         {new Date(meeting.created_at).toLocaleDateString()} |{" "}
         {new Date(meeting.created_at).toLocaleTimeString()}
       </Text>
+      <Text style={styles.meta}>Duration: {durationText}</Text>
       <View
         style={[
           styles.statusChip,

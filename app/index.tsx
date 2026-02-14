@@ -4,6 +4,7 @@ import { useMeetings } from "@/hooks/use-meetings";
 import { Meeting } from "@/types/meeting";
 import {
   formatDuration,
+  getMeetingDurationText,
   getMeetingStatusPalette,
   getWaveStyle,
 } from "@/utils/home";
@@ -63,8 +64,9 @@ export const HomeScreen = () => {
     await toggleRecording();
   };
 
-  const renderMeeting = ({ item, index }: { item: Meeting; index: number }) => {
+  const renderMeeting = ({ item }: { item: Meeting }) => {
     const statusPalette = getMeetingStatusPalette(item.status);
+    const durationText = getMeetingDurationText(item.started_at, item.ended_at);
 
     return (
       <Pressable
@@ -77,6 +79,7 @@ export const HomeScreen = () => {
             {new Date(item.created_at).toLocaleDateString()} |{" "}
             {new Date(item.created_at).toLocaleTimeString()}
           </Text>
+          <Text style={styles.meetingDuration}>Duration: {durationText}</Text>
         </View>
         <View
           style={[
@@ -304,6 +307,11 @@ const styles = StyleSheet.create({
   meetingDate: {
     color: "#9da3ad",
     marginTop: 4,
+  },
+  meetingDuration: {
+    color: "#8b92a0",
+    marginTop: 2,
+    fontSize: 13,
   },
   statusPill: {
     backgroundColor: "#3a3e46",

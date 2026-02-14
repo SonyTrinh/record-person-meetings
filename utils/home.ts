@@ -12,6 +12,39 @@ export const formatDuration = (seconds: number) => {
   return `${mins}:${secs}`;
 };
 
+export const getMeetingDurationSeconds = (
+  startedAt: string | null,
+  endedAt: string | null,
+) => {
+  if (!startedAt) {
+    return null;
+  }
+
+  const startedAtMs = Date.parse(startedAt);
+  if (Number.isNaN(startedAtMs)) {
+    return null;
+  }
+
+  const endedAtMs = endedAt ? Date.parse(endedAt) : Date.now();
+  if (Number.isNaN(endedAtMs)) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor((endedAtMs - startedAtMs) / 1000));
+};
+
+export const getMeetingDurationText = (
+  startedAt: string | null,
+  endedAt: string | null,
+) => {
+  const durationSeconds = getMeetingDurationSeconds(startedAt, endedAt);
+  if (durationSeconds === null) {
+    return "--:--";
+  }
+
+  return formatDuration(durationSeconds);
+};
+
 export const getMeetingStatusPalette = (status: MeetingStatus) => {
   switch (status) {
     case "recording":
