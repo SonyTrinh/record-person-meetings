@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "record-in-person-mettings",
-    "slug": "record-in-person-mettings",
+    "name": "record-in-person-meetings",
+    "slug": "record-in-person-meetings",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "recordinpersonmettings",
+    "scheme": "recordinpersonmeetings",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hieutrinh.recordinpersonmeetings"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,6 +28,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -40,9 +42,19 @@
         }
       ]
     ],
+    "notification": {
+      "iosDisplayInForeground": true
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c0ccfb42-2464-432e-b7ef-37195a541432"
+      }
+    },
+    "owner": "sonytrinh"
   }
 }
