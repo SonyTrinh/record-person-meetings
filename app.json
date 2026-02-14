@@ -39,6 +39,7 @@
       "expo-router",
       "expo-audio",
       "expo-notifications",
+      "./plugins/with-background-recording",
       [
         "expo-splash-screen",
         {
