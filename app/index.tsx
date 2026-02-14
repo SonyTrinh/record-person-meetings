@@ -8,6 +8,7 @@ import {
   getWaveStyle,
 } from "@/utils/home";
 import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
@@ -62,13 +63,19 @@ export const HomeScreen = () => {
     await toggleRecording();
   };
 
-  const renderMeeting = ({ item }: { item: Meeting }) => {
+  const renderMeeting = ({ item, index }: { item: Meeting; index: number }) => {
     const statusPalette = getMeetingStatusPalette(item.status);
+    const meetingNumber = index + 1;
 
     return (
-      <Pressable style={styles.meetingCard} onPress={() => {}}>
+      <Pressable
+        style={styles.meetingCard}
+        onPress={() => router.push(`/meetings/${item.id}?meetingNo=${meetingNumber}`)}
+      >
         <View>
-          <Text style={styles.meetingTitle}>{item.title || "Meeting"}</Text>
+          <Text style={styles.meetingTitle}>
+            {item.title ? `${item.title} #${meetingNumber}` : `Meeting ${meetingNumber}`}
+          </Text>
           <Text style={styles.meetingDate}>
             {new Date(item.created_at).toLocaleDateString()} |{" "}
             {new Date(item.created_at).toLocaleTimeString()}
