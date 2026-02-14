@@ -2,7 +2,6 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
-  Easing,
   FlatList,
   Pressable,
   RefreshControl,
@@ -11,59 +10,29 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-type MeetingCard = {
-  id: string;
-  title: string;
-  createdAt: string;
-  status: "recording" | "processing" | "done" | "failed";
-};
-
-const SAMPLE_MEETINGS: MeetingCard[] = [
-  {
-    id: "1",
-    title: "Sprint planning",
-    createdAt: "2026-02-12T09:30:00.000Z",
-    status: "done",
-  },
-  {
-    id: "2",
-    title: "Design review",
-    createdAt: "2026-02-13T14:15:00.000Z",
-    status: "processing",
-  },
-];
-
-const getMeetingStatusPalette = (status: MeetingCard["status"]) => {
-  switch (status) {
-    case "recording":
-      return { pillBackground: "#6d2329", text: "#ff8b90" };
-    case "processing":
-      return { pillBackground: "#4d3920", text: "#ffcf8a" };
-    case "done":
-      return { pillBackground: "#1f4a37", text: "#7ef3c1" };
-    default:
-      return { pillBackground: "#4a2222", text: "#ff9e9e" };
-  }
-};
-
-const formatDuration = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${mins}:${secs}`;
-};
+import {
+  REFRESH_DELAY_MS,
+  SAMPLE_MEETINGS,
+  type MeetingCard,
+} from "../constants/home";
+import {
+  formatDuration,
+  getMeetingStatusPalette,
+  getWaveStyle,
+  startWaveLoops,
+} from "../utils/home";
 
 export default function HomeScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [helperMessage, setHelperMessage] = useState(
+    "Tap the record button to start recording",
+  );
   const buttonScale = useRef(new Animated.Value(1)).current;
   const waveAnimOne = useRef(new Animated.Value(0)).current;
   const waveAnimTwo = useRef(new Animated.Value(0)).current;
+  const helperTextAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!isRecording) {
@@ -82,7 +51,7 @@ export default function HomeScreen() {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-    }, 1000);
+    }, REFRESH_DELAY_MS);
   };
 
   const recordButtonText = useMemo(() => {
@@ -101,36 +70,28 @@ export default function HomeScreen() {
       return;
     }
 
-    const buildWaveLoop = (value: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(value, {
-            toValue: 1,
-            duration: 1800,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(value, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-
-    const waveOneLoop = buildWaveLoop(waveAnimOne, 0);
-    const waveTwoLoop = buildWaveLoop(waveAnimTwo, 900);
-    waveOneLoop.start();
-    waveTwoLoop.start();
-
-    return () => {
-      waveOneLoop.stop();
-      waveTwoLoop.stop();
-      waveAnimOne.setValue(0);
-      waveAnimTwo.setValue(0);
-    };
+    return startWaveLoops(waveAnimOne, waveAnimTwo);
   }, [isRecording, waveAnimOne, waveAnimTwo]);
+
+  useEffect(() => {
+    const nextMessage = isRecording
+      ? "Recording in background is enabled. You can lock your screen."
+      : "Tap the record button to start recording";
+
+    helperTextAnim.stopAnimation();
+    Animated.timing(helperTextAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      setHelperMessage(nextMessage);
+      Animated.timing(helperTextAnim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [helperTextAnim, isRecording]);
 
   const handleRecordPress = async () => {
     Animated.sequence([
@@ -149,21 +110,6 @@ export default function HomeScreen() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsRecording((prev) => !prev);
   };
-
-  const getWaveStyle = (value: Animated.Value) => ({
-    opacity: value.interpolate({
-      inputRange: [0, 0.65, 1],
-      outputRange: [0.36, 0.2, 0],
-    }),
-    transform: [
-      {
-        scale: value.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.86, 1.55],
-        }),
-      },
-    ],
-  });
 
   const renderMeeting = ({ item }: { item: MeetingCard }) => {
     const statusPalette = getMeetingStatusPalette(item.status);
@@ -231,11 +177,26 @@ export default function HomeScreen() {
             </Pressable>
           </Animated.View>
         </View>
-        <Text style={styles.helperText}>
-          {isRecording
-            ? "Recording in background is enabled. You can lock your screen."
-            : "Tap the record button to start recording"}
-        </Text>
+        <View style={styles.helperTextContainer}>
+          <Animated.Text
+            style={[
+              styles.helperText,
+              {
+                opacity: helperTextAnim,
+                transform: [
+                  {
+                    translateY: helperTextAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [8, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            {helperMessage}
+          </Animated.Text>
+        </View>
       </View>
 
       <View style={styles.listContainer}>
@@ -326,9 +287,15 @@ const styles = StyleSheet.create({
   },
   helperText: {
     color: "#b8b8b8",
-    marginTop: 24,
     fontSize: 17,
+    lineHeight: 22,
     textAlign: "center",
+  },
+  helperTextContainer: {
+    marginTop: 24,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContainer: {
     flex: 1,
