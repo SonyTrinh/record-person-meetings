@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated } from "react-native";
-
-import { startWaveLoops } from "../utils/home";
+import { Animated, Easing } from "react-native";
 
 const RECORDING_HELPER_TEXT =
   "Recording in background is enabled. You can lock your screen.";
@@ -24,7 +22,36 @@ export const useHomeAnimations = (isRecording: boolean) => {
       return;
     }
 
-    return startWaveLoops(waveAnimOne, waveAnimTwo);
+    const buildWaveLoop = (value: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, {
+            toValue: 1,
+            duration: 1800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+
+    const waveOneLoop = buildWaveLoop(waveAnimOne, 0);
+    const waveTwoLoop = buildWaveLoop(waveAnimTwo, 900);
+
+    waveOneLoop.start();
+    waveTwoLoop.start();
+
+    return () => {
+      waveOneLoop.stop();
+      waveTwoLoop.stop();
+      waveAnimOne.setValue(0);
+      waveAnimTwo.setValue(0);
+    };
   }, [isRecording, waveAnimOne, waveAnimTwo]);
 
   useEffect(() => {

@@ -1,6 +1,16 @@
-import * as Haptics from "expo-haptics";
-import { useEffect, useMemo, useState } from "react";
+import { useHomeAnimations } from "@/hooks/use-home-animations";
+import { useMeetingRecorder } from "@/hooks/use-meeting-recorder";
+import { useMeetings } from "@/hooks/use-meetings";
+import { Meeting } from "@/types/meeting";
 import {
+  formatDuration,
+  getMeetingStatusPalette,
+  getWaveStyle,
+} from "@/utils/home";
+import * as Haptics from "expo-haptics";
+import { useCallback, useEffect, useMemo } from "react";
+import {
+  ActivityIndicator,
   Animated,
   FlatList,
   Pressable,
@@ -10,22 +20,22 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  REFRESH_DELAY_MS,
-  SAMPLE_MEETINGS,
-  type MeetingCard,
-} from "../constants/home";
-import {
-  formatDuration,
-  getMeetingStatusPalette,
-  getWaveStyle,
-} from "../utils/home";
-import { useHomeAnimations } from "../hooks/use-home-animations";
 
-export default function HomeScreen() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
+export const HomeScreen = () => {
+  const { meetings, loading, refreshing, fetchMeetings } = useMeetings();
+
+  const handleRefreshMeetings = useCallback(() => {
+    fetchMeetings({ mode: "refreshing" });
+  }, [fetchMeetings]);
+
+  const refreshMeetingsSilently = useCallback(() => {
+    fetchMeetings({ mode: "silent" });
+  }, [fetchMeetings]);
+
+  const { isRecording, elapsedSeconds, toggleRecording } = useMeetingRecorder({
+    onRefreshMeetings: refreshMeetingsSilently,
+  });
+
   const {
     buttonScale,
     waveAnimOne,
@@ -36,24 +46,8 @@ export default function HomeScreen() {
   } = useHomeAnimations(isRecording);
 
   useEffect(() => {
-    if (!isRecording) {
-      setElapsedSeconds(0);
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isRecording]);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, REFRESH_DELAY_MS);
-  };
+    fetchMeetings();
+  }, [fetchMeetings]);
 
   const recordButtonText = useMemo(() => {
     if (!isRecording) {
@@ -65,10 +59,10 @@ export default function HomeScreen() {
   const handleRecordPress = async () => {
     runRecordButtonPressAnimation();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsRecording((prev) => !prev);
+    await toggleRecording();
   };
 
-  const renderMeeting = ({ item }: { item: MeetingCard }) => {
+  const renderMeeting = ({ item }: { item: Meeting }) => {
     const statusPalette = getMeetingStatusPalette(item.status);
 
     return (
@@ -76,8 +70,8 @@ export default function HomeScreen() {
         <View>
           <Text style={styles.meetingTitle}>{item.title || "Meeting"}</Text>
           <Text style={styles.meetingDate}>
-            {new Date(item.createdAt).toLocaleDateString()} |{" "}
-            {new Date(item.createdAt).toLocaleTimeString()}
+            {new Date(item.created_at).toLocaleDateString()} |{" "}
+            {new Date(item.created_at).toLocaleTimeString()}
           </Text>
         </View>
         <View
@@ -161,26 +155,31 @@ export default function HomeScreen() {
           <Text style={styles.listTitle}>Recorded voices</Text>
         </View>
         <FlatList
-          data={SAMPLE_MEETINGS}
+          data={meetings}
           keyExtractor={(item) => item.id}
           renderItem={renderMeeting}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              onRefresh={handleRefreshMeetings}
               tintColor="#f0444a"
+              progressViewOffset={0}
               progressBackgroundColor="#090b10"
             />
           }
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No meetings yet.</Text>
+            loading ? (
+              <ActivityIndicator color="#f0444a" />
+            ) : (
+              <Text style={styles.emptyText}>No meetings yet.</Text>
+            )
           }
         />
       </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -267,7 +266,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+    marginLeft: 4,
   },
   listTitle: {
     color: "#f1f1f1",
@@ -320,3 +320,5 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
 });
+
+export default HomeScreen;

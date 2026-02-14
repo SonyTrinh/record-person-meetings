@@ -1,6 +1,6 @@
-import { Animated, Easing } from "react-native";
+import { Animated } from "react-native";
 
-import type { MeetingStatus } from "../constants/home";
+import type { MeetingStatus } from "@/types/meeting";
 
 export const formatDuration = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
@@ -18,7 +18,7 @@ export const getMeetingStatusPalette = (status: MeetingStatus) => {
       return { pillBackground: "#6d2329", text: "#ff8b90" };
     case "processing":
       return { pillBackground: "#4d3920", text: "#ffcf8a" };
-    case "done":
+    case "completed":
       return { pillBackground: "#1f4a37", text: "#7ef3c1" };
     default:
       return { pillBackground: "#4a2222", text: "#ff9e9e" };
@@ -39,39 +39,3 @@ export const getWaveStyle = (value: Animated.Value) => ({
     },
   ],
 });
-
-export const startWaveLoops = (
-  waveAnimOne: Animated.Value,
-  waveAnimTwo: Animated.Value,
-) => {
-  const buildWaveLoop = (value: Animated.Value, delay: number) =>
-    Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(value, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(value, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-  const waveOneLoop = buildWaveLoop(waveAnimOne, 0);
-  const waveTwoLoop = buildWaveLoop(waveAnimTwo, 900);
-
-  waveOneLoop.start();
-  waveTwoLoop.start();
-
-  return () => {
-    waveOneLoop.stop();
-    waveTwoLoop.stop();
-    waveAnimOne.setValue(0);
-    waveAnimTwo.setValue(0);
-  };
-};
