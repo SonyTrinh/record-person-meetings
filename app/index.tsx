@@ -1,5 +1,5 @@
 import * as Haptics from "expo-haptics";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -19,20 +19,21 @@ import {
   formatDuration,
   getMeetingStatusPalette,
   getWaveStyle,
-  startWaveLoops,
 } from "../utils/home";
+import { useHomeAnimations } from "../hooks/use-home-animations";
 
 export default function HomeScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [helperMessage, setHelperMessage] = useState(
-    "Tap the record button to start recording",
-  );
-  const buttonScale = useRef(new Animated.Value(1)).current;
-  const waveAnimOne = useRef(new Animated.Value(0)).current;
-  const waveAnimTwo = useRef(new Animated.Value(0)).current;
-  const helperTextAnim = useRef(new Animated.Value(1)).current;
+  const {
+    buttonScale,
+    waveAnimOne,
+    waveAnimTwo,
+    helperTextAnim,
+    helperMessage,
+    runRecordButtonPressAnimation,
+  } = useHomeAnimations(isRecording);
 
   useEffect(() => {
     if (!isRecording) {
@@ -61,53 +62,9 @@ export default function HomeScreen() {
     return `STOP\n${formatDuration(elapsedSeconds)}`;
   }, [elapsedSeconds, isRecording]);
 
-  useEffect(() => {
-    if (!isRecording) {
-      waveAnimOne.stopAnimation();
-      waveAnimTwo.stopAnimation();
-      waveAnimOne.setValue(0);
-      waveAnimTwo.setValue(0);
-      return;
-    }
-
-    return startWaveLoops(waveAnimOne, waveAnimTwo);
-  }, [isRecording, waveAnimOne, waveAnimTwo]);
-
-  useEffect(() => {
-    const nextMessage = isRecording
-      ? "Recording in background is enabled. You can lock your screen."
-      : "Tap the record button to start recording";
-
-    helperTextAnim.stopAnimation();
-    Animated.timing(helperTextAnim, {
-      toValue: 0,
-      duration: 120,
-      useNativeDriver: true,
-    }).start(() => {
-      setHelperMessage(nextMessage);
-      Animated.timing(helperTextAnim, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }).start();
-    });
-  }, [helperTextAnim, isRecording]);
-
   const handleRecordPress = async () => {
-    Animated.sequence([
-      Animated.timing(buttonScale, {
-        toValue: 0.94,
-        duration: 90,
-        useNativeDriver: true,
-      }),
-      Animated.timing(buttonScale, {
-        toValue: 1,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    runRecordButtonPressAnimation();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsRecording((prev) => !prev);
   };
 
