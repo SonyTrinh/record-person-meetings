@@ -1,50 +1,142 @@
-# Welcome to your Expo app 👋
+# Record In-Person Meetings
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo app + FastAPI backend for recording in-person meetings, uploading audio to Supabase Storage, and generating transcript/summary.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Record meetings from mobile app
+- Background recording support (iOS + Android config plugin)
+- Upload audio to Supabase Storage
+- Trigger backend processing workflow
+- Store transcript/summary in Supabase
+- Push notification when processing completes
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- Mobile: Expo (React Native, Expo Router, Expo Audio, Expo Notifications)
+- Backend: FastAPI + OpenAI + Supabase Python client
+- Data: Supabase Postgres + Supabase Storage
 
-   ```bash
-   npx expo start
-   ```
+## Prerequisites
 
-In the output, you'll find options to open the app in a
+- Node.js 18+
+- npm
+- Python 3.10+
+- Xcode (for iOS build) / Android Studio (for Android build)
+- Supabase project
+- OpenAI API key (optional for real transcription/summary)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Environment Variables
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Mobile (`.env`)
 
-## Get a fresh project
-
-When you're ready, run:
+Copy `.env.example` to `.env`:
 
 ```bash
-npm run reset-project
+cp .env.example .env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Required values:
 
-## Learn more
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_BACKEND_URL` (for real devices, use reachable LAN/public URL)
 
-To learn more about developing your project with Expo, look at the following resources:
+### Backend (`backend/.env`)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Copy `backend/.env.example` to `backend/.env`:
 
-## Join the community
+```bash
+cp backend/.env.example backend/.env
+```
 
-Join our community of developers creating universal apps.
+Required values:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY`
+- `APP_SCHEME` (default in sample: `recpersonmettings`)
+- `AUDIO_BUCKET` (default: `meeting-audio`)
+
+## Install
+
+```bash
+npm install
+```
+
+## Run the Mobile App
+
+Start Metro:
+
+```bash
+npm run start
+```
+
+Run native builds:
+
+```bash
+npm run ios
+npm run android
+```
+
+Note: This project uses native modules (`expo-audio`, notifications, config plugin), so use a development build (`expo run:*`) instead of relying only on Expo Go.
+
+## Run the Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Health check:
+
+```bash
+curl http://localhost:8000/health
+```
+
+## Background Recording Plugin
+
+Configured in `app.json`:
+
+- `./plugins/with-background-recording`
+
+It applies:
+
+- iOS `UIBackgroundModes: ["audio"]`
+- iOS `NSMicrophoneUsageDescription` fallback
+- Android permissions:
+  - `android.permission.RECORD_AUDIO`
+  - `android.permission.WAKE_LOCK`
+  - `android.permission.FOREGROUND_SERVICE`
+  - `android.permission.FOREGROUND_SERVICE_MICROPHONE`
+
+After changing plugin/config, regenerate native files:
+
+```bash
+npx expo prebuild --clean
+```
+
+## Troubleshooting
+
+- **`NSMicrophoneUsageDescription` missing**
+  - Ensure key exists in `app.json` (`expo.ios.infoPlist`)
+  - Rebuild app (`npm run ios`), hot reload is not enough
+
+- **`prepareToRecordAsync` fails on iOS Simulator**
+  - Simulator microphone/audio session can be unreliable
+  - Prefer testing recording on a real iPhone
+
+- **Pull-to-refresh white flash**
+  - Keep list mounted while refreshing (already handled in current UI implementation)
+
+- **Backend not reachable from phone**
+  - Set `EXPO_PUBLIC_BACKEND_URL` to your computer LAN IP and backend port
+
+## Security Notes
+
+- Never commit real secrets in `.env` files
+- Rotate keys immediately if they were exposed
+- Service role key must stay server-side only (`backend/.env`)
